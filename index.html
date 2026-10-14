@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>南武ライン・タイクーン 2D (CHORO-Q TRAIN EDITION)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background-color: #0f172a;
+      color: #0f172a;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* 南武線トリコロールストライプ */
+    .nambu-stripes {
+      display: flex;
+      height: 4px;
+      width: 100%;
+      position: sticky;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    .stripe-yellow { flex: 2; background-color: #ffd400; }
+    .stripe-orange { flex: 1; background-color: #ea580c; }
+    .stripe-grape  { flex: 1; background-color: #4a1525; }
+
+    /* ============================================================
+       ホーム画面
+       ============================================================ */
+    #home-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background: #0f172a;
+      z-index: 300;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .home-card {
+      background: #ffffff;
+      color: #0f172a;
+      border: 2px solid #ffd400;
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 440px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: auto;
+    }
+
+    .home-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .station-sign-badge {
+      background: #ffd400;
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .home-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .home-sub {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .config-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .config-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .config-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+    }
+
+    .config-val {
+      font-size: 12px;
+      font-weight: 900;
+      color: #ea580c;
+    }
+
+    .player-count-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .count-btn {
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+    }
+
+    .count-btn.active {
+      background: #ffffff;
+      border-color: #ffd400;
+      color: #0f172a;
+      box-shadow: 0 0 0 2px #ffd400;
+    }
+
+    .slider-range {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      -webkit-appearance: none;
+      accent-color: #ffd400;
+    }
+
+    .player-roster {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .player-config-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .p-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .type-toggle-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #334155;
+    }
+
+    .type-toggle-btn.is-cpu {
+      background: #ffd400;
+      border-color: #eab308;
+      color: #0f172a;
+    }
+
+    .btn-start-game {
+      background: #ffd400;
+      border: none;
+      color: #0f172a;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35);
+    }
+
+    /* ============================================================
+       メインレイアウト (PC: 横分割 / スマホ: 縦スクロール対応)
+       ============================================================ */
+    .app-container {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      background: #0f172a;
+    }
+
+    /* 盤面エリア */
+    .board-viewport {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 4px;
+      background: #090d16;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #board-transform-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 800px;
+      height: 800px;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    #game-canvas {
+      width: 800px;
+      height: 800px;
+      display: block;
+      background: #ffffff;
+    }
+
+    /* 追従・ズーム コントロールUI */
+    .zoom-controls-floating {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      z-index: 25;
+    }
+
+    .btn-zoom-ctrl {
+      background: rgba(15, 23, 42, 0.92);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 10px;
+      font-weight: 900;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    .btn-follow-toggle {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-follow-toggle.active {
+      background: #ffd400;
+      border-color: #eab308;
+      color: #0f172a;
+    }
+
+    /* 現在地HUDバナー */
+    .current-station-hud {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      border-left: 3px solid #ffd400;
+      border-radius: 6px;
+      padding: 4px 8px;
+      display: flex;
+      flex-direction: column;
+      z-index: 25;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .hud-title-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hud-code {
+      background: #ffd400;
+      color: #0f172a;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    .hud-name {
+      font-size: 13px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .hud-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    /* サイドバー / 下部操作パネル */
+    .sidebar-panel {
+      background: #ffffff;
+      border-left: 2px solid #ffd400;
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 8px 12px;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 4px;
+      z-index: 30;
+    }
+
+    .logo-badge {
+      background: #ffd400;
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .sidebar-content {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* 操作ドック */
+    .action-dock {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-top: 3px solid #ffd400;
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .turn-indicator {
+      font-size: 12px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dice-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dice-cube {
+      width: 34px;
+      height: 34px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 2px solid #0f172a;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 900;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .dice-cube.rolling {
+      animation: diceShake 0.1s infinite;
+      border-color: #ffd400;
+      background: #fffbeb;
+    }
+
+    @keyframes diceShake {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(8deg) scale(1.08); }
+      100% { transform: rotate(-8deg) scale(1); }
+    }
+
+    .action-buttons-group {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .btn-roll {
+      grid-column: span 2;
+      background: #ffd400;
+      color: #0f172a;
+      border: none;
+      padding: 9px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(234, 179, 8, 0.35);
+    }
+
+    .btn-roll:disabled {
+      background: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-action-sub {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 5px 3px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-action-sub:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* プレイヤーカード */
+    .player-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 5px 6px;
+      transition: all 0.2s;
+    }
+
+    .player-card.active-turn {
+      border-color: #ffd400;
+      background: #ffffff;
+      box-shadow: 0 0 0 1.5px #ffd400;
+    }
+
+    .player-card.bankrupted {
+      opacity: 0.35;
+      background: #e2e8f0;
+    }
+
+    .p-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .p-name-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 900;
+    }
+
+    .p-money {
+      font-size: 14px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .p-props-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-top: 2px;
+      max-height: 38px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .prop-chip {
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 800;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .prop-chip.mortgaged {
+      background: #94a3b8 !important;
+      text-decoration: line-through;
+    }
+
+    /* 浮動マネー・トースト */
+    #floating-money-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .floating-money {
+      position: absolute;
+      font-size: 24px;
+      font-weight: 900;
+      animation: floatUp 1.3s ease-out forwards;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    .floating-money.gain { color: #22c55e; }
+    .floating-money.loss { color: #ef4444; }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(15px) scale(0.8); }
+      20% { opacity: 1; transform: translateY(0) scale(1.15); }
+      80% { opacity: 1; transform: translateY(-30px) scale(1); }
+      100% { opacity: 0; transform: translateY(-50px) scale(0.9); }
+    }
+
+    #event-toast {
+      position: absolute;
+      top: 46px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      background: rgba(15, 23, 42, 0.96);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      z-index: 40;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    #event-toast.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* モーダル群 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      padding: 10px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 12px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      margin: auto;
+    }
+
+    .modal-bar {
+      height: 5px;
+      border-radius: 2px;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 3px;
+      text-align: center;
+    }
+
+    .modal-desc {
+      font-size: 11px;
+      color: #475569;
+      line-height: 1.45;
+      margin-bottom: 10px;
+      white-space: pre-line;
+      text-align: left;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: 900;
+      font-size: 11px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-confirm { background: #ffd400; color: #0f172a; }
+    .btn-cancel  { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+    /* 競売 */
+    .auction-bid-board {
+      background: #fffbeb;
+      border: 1.5px solid #fde047;
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .auction-price {
+      font-size: 22px;
+      font-weight: 900;
+      color: #ea580c;
+    }
+
+    .auction-bidder {
+      font-size: 10px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .auction-btns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+    }
+
+    .btn-bid {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 6px 2px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-pass {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #dc2626;
+      font-weight: 900;
+    }
+
+    /* 資産管理 */
+    .manager-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+
+    .manager-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      background: #f8fafc;
+      font-size: 9.5px;
+    }
+
+    .btn-mgr-mini {
+      padding: 2px 4px;
+      font-size: 8.5px;
+      font-weight: 800;
+      border-radius: 3px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    /* 権利書カード */
+    .deed-card {
+      border: 1.5px solid #0f172a;
+      border-radius: 6px;
+      padding: 6px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 9.5px;
+    }
+    .deed-header {
+      padding: 4px;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 11px;
+      text-align: center;
+      border-radius: 3px;
+    }
+    .deed-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #e2e8f0;
+      padding: 1px 0;
+    }
+
+    /* ============================================================
+       レスポンシブ切り替え (PC vs iPhone SE/スマホ)
+       ============================================================ */
+    @media (min-width: 841px) {
+      html, body {
+        overflow: hidden;
+      }
+      .app-container {
+        flex-direction: row;
+        height: 100vh;
+        height: 100dvh;
+      }
+      .board-viewport {
+        flex: 1;
+        height: 100%;
+      }
+      .sidebar-panel {
+        width: 320px;
+        height: 100%;
+      }
+      .sidebar-content {
+        overflow-y: auto;
+        height: calc(100vh - 44px);
+      }
+      #players-list-box {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+
+    @media (max-width: 840px) {
+      .app-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      .board-viewport {
+        flex: none;
+        width: 100%;
+        height: 52vh;
+        height: 52dvh;
+        padding: 0;
+      }
+      .sidebar-panel {
+        width: 100%;
+        flex: none;
+        border-left: none;
+        border-top: 2px solid #ffd400;
+      }
+      .sidebar-content {
+        padding: 6px 8px 30px 8px;
+      }
+      #players-list-box {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="nambu-stripes">
+  <div class="stripe-yellow"></div>
+  <div class="stripe-orange"></div>
+  <div class="stripe-grape"></div>
+</div>
+
+<!-- ==========================================
+     ホーム画面
+     ========================================== -->
+<div id="home-screen">
+  <div class="home-card">
+    <div class="home-header">
+      <span class="station-sign-badge">PRO SMART ZOOM</span>
+      <h1 class="home-title">南武ライン・タイクーン 2D</h1>
+      <p class="home-sub">全30駅 チョロQトレイン搭載 不動産ゲーム</p>
+    </div>
+
+    <div class="config-group">
+      <div class="config-label-row">
+        <label class="config-label">参加人数</label>
+      </div>
+      <div class="player-count-selector">
+        <button class="count-btn" onclick="selectPlayerCount(2)">2人</button>
+        <button class="count-btn" onclick="selectPlayerCount(3)">3人</button>
+        <button class="count-btn active" onclick="selectPlayerCount(4)">4人</button>
+      </div>
+    </div>
+
+    <div class="config-group">
+      <div class="config-label-row">
+        <label class="config-label">AIの強さ (100段階)</label>
+        <span class="config-val" id="ai-level-val">LEVEL 75 (熟練)</span>
+      </div>
+      <input type="range" min="1" max="100" value="75" class="slider-range" id="ai-slider" oninput="updateAiLevelLabel(this.value)">
+    </div>
+
+    <div class="config-group">
+      <label class="config-label">プレイヤー設定</label>
+      <div class="player-roster" id="roster-container"></div>
+    </div>
+
+    <button class="btn-start-game" onclick="startGame()">ゲーム開始</button>
+  </div>
+</div>
+
+<!-- ==========================================
+     メインゲーム画面
+     ========================================== -->
+<div class="app-container">
+  <!-- 盤面エリア（スマートズーム・タッチパン対応） -->
+  <div class="board-viewport" id="viewport">
+    <div id="board-transform-container">
+      <canvas id="game-canvas" width="800" height="800"></canvas>
+    </div>
+
+    <!-- 追従・ズーム コントロール -->
+    <div class="zoom-controls-floating">
+      <button class="btn-zoom-ctrl btn-follow-toggle active" id="follow-toggle-btn" onclick="toggleFollowMode()">追従: ON</button>
+      <button class="btn-zoom-ctrl" onclick="zoomIn()">＋</button>
+      <button class="btn-zoom-ctrl" onclick="zoomOut()">－</button>
+      <button class="btn-zoom-ctrl" onclick="fitWholeBoard()">全体</button>
+    </div>
+
+    <!-- 現在地HUDバナー -->
+    <div class="current-station-hud" id="hud-banner">
+      <div class="hud-title-row">
+        <span class="hud-code" id="hud-code">NL 01</span>
+        <span class="hud-name" id="hud-name">川崎</span>
+      </div>
+      <span class="hud-sub" id="hud-sub">始発駅 給料 $200</span>
+    </div>
+
+    <div id="floating-money-container"></div>
+    <div id="event-toast"></div>
+  </div>
+
+  <!-- 操作＆プレイヤー情報サイドバー -->
+  <aside class="sidebar-panel">
+    <div class="sidebar-header">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <span class="logo-badge">NL</span>
+        <span style="font-weight:900; font-size:12px;">南武ライン 2D</span>
+      </div>
+      <div style="display:flex; gap:4px;">
+        <button id="speed-toggle-btn" class="btn-action-sub" onclick="cycleGameSpeed()">速度: x1</button>
+        <button class="btn-action-sub" onclick="backToHome()">HOME</button>
+      </div>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- 操作ドック -->
+      <div class="action-dock">
+        <div id="turn-indicator" class="turn-indicator">
+          <span class="color-dot" id="turn-dot" style="background:#ffd400;"></span>
+          <span id="turn-name">P1 の手番</span>
+        </div>
+        <div class="dice-container">
+          <div id="dice-1" class="dice-cube">-</div>
+          <div id="dice-2" class="dice-cube">-</div>
+        </div>
+        <div class="action-buttons-group">
+          <button id="roll-btn" class="btn-roll" onclick="rollDice()">ダイスを振る (2D6)</button>
+          <button id="manage-btn" class="btn-action-sub" onclick="openManagerModal()">資産管理・増築</button>
+          <button id="trade-btn" class="btn-action-sub" onclick="openTradeModal()">物件交換 交渉</button>
+          <button id="jail-pay-btn" class="btn-action-sub" style="display:none; color:#ea580c;" onclick="payJailFine()">保釈金 $50 出所</button>
+          <button id="jail-pass-btn" class="btn-action-sub" style="display:none; color:#0284c7;" onclick="useJailPass()">出場証で出所</button>
+        </div>
+      </div>
+
+      <!-- プレイヤーカード一覧（スマホでは2×2で配置） -->
+      <div id="players-list-box"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- 汎用モーダル -->
+<div id="game-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div id="modal-bar" class="modal-bar"></div>
+    <h3 id="modal-title" class="modal-title">タイトル</h3>
+    <div id="modal-desc" class="modal-desc">説明</div>
+    <div class="modal-btns">
+      <button id="modal-btn-confirm" class="modal-btn btn-confirm" onclick="handleModalAction(true)">確定</button>
+      <button id="modal-btn-cancel" class="modal-btn btn-cancel" onclick="handleModalAction(false)">見送り</button>
+    </div>
+  </div>
+</div>
+
+<!-- 競売モーダル -->
+<div id="auction-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-bar" style="background:#ea580c;"></div>
+    <h3 class="modal-title">沿線公開競売 (AUCTION)</h3>
+    <p id="auction-prop-name" style="font-size:12px; font-weight:800; text-align:center; color:#334155; margin-bottom:6px;">駅名</p>
+    <div class="auction-bid-board">
+      <div class="auction-price" id="auction-current-price">$10</div>
+      <div class="auction-bidder" id="auction-current-bidder">最高入札者: なし</div>
+    </div>
+    <div class="auction-btns" id="auction-controls">
+      <button class="btn-bid" onclick="placeAuctionBid(10)">+$10</button>
+      <button class="btn-bid" onclick="placeAuctionBid(50)">+$50</button>
+      <button class="btn-bid" onclick="placeAuctionBid(100)">+$100</button>
+      <button class="btn-bid btn-pass" onclick="passAuctionBid()">パス</button>
+    </div>
+  </div>
+</div>
+
+<!-- 資産管理マネージャーモーダル -->
+<div id="manager-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-bar" style="background:#ffd400;"></div>
+    <h3 class="modal-title">沿線資産管理マネージャー</h3>
+    <p style="font-size:11px; color:#64748b; margin-bottom:8px;">独占エリアでの増築・売却、資金調達の抵当設定が可能です。</p>
+    <div class="manager-list" id="manager-property-list"></div>
+    <button class="modal-btn btn-cancel" style="width:100%;" onclick="closeManagerModal()">閉じる</button>
+  </div>
+</div>
+
+<!-- 交渉（トレード）モーダル -->
+<div id="trade-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-bar" style="background:#ffd400;"></div>
+    <h3 class="modal-title">物件交換 交渉</h3>
+    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
+      <select id="trade-target-select" style="padding:5px; font-weight:800; font-size:11px;" onchange="renderTradeItems()"></select>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+        <div style="border:1px solid #e2e8f0; padding:5px; border-radius:5px; background:#f8fafc;">
+          <span style="font-size:9px; font-weight:800;">提供物件</span>
+          <div id="my-trade-props" style="max-height:85px; overflow-y:auto; font-size:10px;"></div>
+          <input type="number" id="my-trade-cash" placeholder="資金 ($)" style="width:100%; font-size:10px; padding:2px;" min="0" value="0" oninput="updateTradeDialogue()">
+        </div>
+        <div style="border:1px solid #e2e8f0; padding:5px; border-radius:5px; background:#f8fafc;">
+          <span style="font-size:9px; font-weight:800;">要求物件</span>
+          <div id="target-trade-props" style="max-height:85px; overflow-y:auto; font-size:10px;"></div>
+          <input type="number" id="target-trade-cash" placeholder="要求 ($)" style="width:100%; font-size:10px; padding:2px;" min="0" value="0" oninput="updateTradeDialogue()">
+        </div>
+      </div>
+    </div>
+    <div id="trade-dialogue-preview" style="background:#fffbeb; border-left:3px solid #ffd400; padding:6px; font-size:10px; line-height:1.4; margin-bottom:8px;"></div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-confirm" onclick="submitTradeProposal()">提案送信</button>
+      <button class="modal-btn btn-cancel" onclick="closeTradeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ============================================================
+     南武線 全40マス データ
+     ============================================================ */
+  const SQUARES = [
+    // 下辺 (0〜10: 外側＝下)
+    { id: 0, name: "川崎", code: "NL 01", type: "go", sub: "始発駅 給料 $200" },
+    { id: 1, name: "尻手", code: "NL 02", type: "prop", group: "brown", color: "#8b5a2b", price: 60, houseCost: 50, rent: [2, 10, 30, 90, 160, 250], owner: null, houses: 0, mortgaged: false },
+    { id: 2, name: "沿線トピックス", type: "chest", sub: "沿線情報" },
+    { id: 3, name: "矢向", code: "NL 03", type: "prop", group: "brown", color: "#8b5a2b", price: 60, houseCost: 50, rent: [4, 20, 60, 180, 320, 450], owner: null, houses: 0, mortgaged: false },
+    { id: 4, name: "車両更新費", type: "tax", amount: 200, sub: "税金 -$200" },
+    { id: 5, name: "八丁畷", code: "NL 51", type: "railroad", group: "rr", color: "#ffd400", price: 200, owner: null, mortgaged: false, sub: "南武支線" },
+    { id: 6, name: "谷保", code: "NL 22", type: "prop", group: "lightblue", color: "#0284c7", price: 100, houseCost: 50, rent: [6, 30, 90, 270, 400, 550], owner: null, houses: 0, mortgaged: false },
+    { id: 7, name: "運行ダイヤ情報", type: "chance", sub: "ダイヤ情報" },
+    { id: 8, name: "矢川", code: "NL 23", type: "prop", group: "lightblue", color: "#0284c7", price: 100, houseCost: 50, rent: [6, 30, 90, 270, 400, 550], owner: null, houses: 0, mortgaged: false },
+    { id: 9, name: "西国立", code: "NL 24", type: "prop", group: "lightblue", color: "#0284c7", price: 120, houseCost: 50, rent: [8, 40, 100, 300, 450, 600], owner: null, houses: 0, mortgaged: false },
+    { id: 10, name: "車両基地", type: "jail", sub: "点検待機中" },
+
+    // 左辺 (10〜20: 外側＝左)
+    { id: 11, name: "宿河原", code: "NL 13", type: "prop", group: "pink", color: "#db2777", price: 140, houseCost: 100, rent: [10, 50, 150, 450, 625, 750], owner: null, houses: 0, mortgaged: false },
+    { id: 12, name: "津田山変電所", code: "NL 11", type: "utility", group: "util", color: "#475569", price: 150, owner: null, mortgaged: false, sub: "変電所" },
+    { id: 13, name: "平間", code: "NL 05", type: "prop", group: "pink", color: "#db2777", price: 140, houseCost: 100, rent: [10, 50, 150, 450, 625, 750], owner: null, houses: 0, mortgaged: false },
+    { id: 14, name: "南多摩", code: "NL 19", type: "prop", group: "pink", color: "#db2777", price: 160, houseCost: 100, rent: [12, 60, 180, 500, 700, 900], owner: null, houses: 0, mortgaged: false },
+    { id: 15, name: "川崎新町", code: "NL 52", type: "railroad", group: "rr", color: "#ffd400", price: 200, owner: null, mortgaged: false, sub: "南武支線" },
+    { id: 16, name: "向河原", code: "NL 06", type: "prop", group: "orange", color: "#ea580c", price: 180, houseCost: 100, rent: [14, 70, 200, 550, 750, 950], owner: null, houses: 0, mortgaged: false },
+    { id: 17, name: "沿線トピックス", type: "chest", sub: "沿線情報" },
+    { id: 18, name: "中野島", code: "NL 15", type: "prop", group: "orange", color: "#ea580c", price: 180, houseCost: 100, rent: [14, 70, 200, 550, 750, 950], owner: null, houses: 0, mortgaged: false },
+    { id: 19, name: "矢野口", code: "NL 17", type: "prop", group: "orange", color: "#ea580c", price: 200, houseCost: 100, rent: [16, 80, 220, 600, 800, 1000], owner: null, houses: 0, mortgaged: false },
+    { id: 20, name: "多摩川緑地", type: "parking", sub: "河川敷 休憩所" },
+
+    // 上辺 (20〜30: 外側＝上)
+    { id: 21, name: "鹿島田", code: "NL 04", type: "prop", group: "red", color: "#dc2626", price: 220, houseCost: 150, rent: [18, 90, 250, 700, 875, 1050], owner: null, houses: 0, mortgaged: false },
+    { id: 22, name: "運行ダイヤ情報", type: "chance", sub: "ダイヤ情報" },
+    { id: 23, name: "武蔵新城", code: "NL 09", type: "prop", group: "red", color: "#dc2626", price: 220, houseCost: 150, rent: [18, 90, 250, 700, 875, 1050], owner: null, houses: 0, mortgaged: false },
+    { id: 24, name: "稲城長沼", code: "NL 18", type: "prop", group: "red", color: "#dc2626", price: 240, houseCost: 150, rent: [20, 100, 300, 750, 925, 1100], owner: null, houses: 0, mortgaged: false },
+    { id: 25, name: "小田栄", code: "NL 53", type: "railroad", group: "rr", color: "#ffd400", price: 200, owner: null, mortgaged: false, sub: "南武支線" },
+    { id: 26, name: "府中本町", code: "NL 20", type: "prop", group: "yellow", color: "#ca8a04", price: 260, houseCost: 150, rent: [22, 110, 330, 800, 975, 1150], owner: null, houses: 0, mortgaged: false },
+    { id: 27, name: "稲田堤", code: "NL 16", type: "prop", group: "yellow", color: "#ca8a04", price: 260, houseCost: 150, rent: [22, 110, 330, 800, 975, 1150], owner: null, houses: 0, mortgaged: false },
+    { id: 28, name: "久地給水所", code: "NL 12", type: "utility", group: "util", color: "#475569", price: 150, owner: null, mortgaged: false, sub: "給水所" },
+    { id: 29, name: "武蔵中原", code: "NL 08", type: "prop", group: "yellow", color: "#ca8a04", price: 280, houseCost: 150, rent: [24, 120, 360, 850, 1025, 1200], owner: null, houses: 0, mortgaged: false },
+    { id: 30, name: "車両回送", type: "gotojail", sub: "基地へ直行" },
+
+    // 右辺 (30〜0: 外側＝右)
+    { id: 31, name: "登戸", code: "NL 14", type: "prop", group: "green", color: "#16a34a", price: 300, houseCost: 200, rent: [26, 130, 390, 900, 1100, 1275], owner: null, houses: 0, mortgaged: false },
+    { id: 32, name: "武蔵溝ノ口", code: "NL 10", type: "prop", group: "green", color: "#16a34a", price: 300, houseCost: 200, rent: [26, 130, 390, 900, 1100, 1275], owner: null, houses: 0, mortgaged: false },
+    { id: 33, name: "沿線トピックス", type: "chest", sub: "沿線情報" },
+    { id: 34, name: "分倍河原", code: "NL 21", type: "prop", group: "green", color: "#16a34a", price: 320, houseCost: 200, rent: [28, 150, 450, 1000, 1200, 1400], owner: null, houses: 0, mortgaged: false },
+    { id: 35, name: "浜川崎", code: "NL 54", type: "railroad", group: "rr", color: "#ffd400", price: 200, owner: null, mortgaged: false, sub: "南武支線" },
+    { id: 36, name: "運行ダイヤ情報", type: "chance", sub: "ダイヤ情報" },
+    { id: 37, name: "武蔵小杉", code: "NL 07", type: "prop", group: "darkblue", color: "#1e3a8a", price: 350, houseCost: 200, rent: [35, 175, 500, 1100, 1300, 1500], owner: null, houses: 0, mortgaged: false },
+    { id: 38, name: "駅改良工事", type: "tax", amount: 100, sub: "税金 -$100" },
+    { id: 39, name: "立川", code: "NL 25", type: "prop", group: "darkblue", color: "#1e3a8a", price: 400, houseCost: 200, rent: [50, 200, 600, 1400, 1700, 2000], owner: null, houses: 0, mortgaged: false }
+  ];
+
+  const COLOR_GROUPS = {
+    brown: [1, 3], lightblue: [6, 8, 9], pink: [11, 13, 14],
+    orange: [16, 18, 19], red: [21, 23, 24], yellow: [26, 27, 29],
+    green: [31, 32, 34], darkblue: [37, 39], rr: [5, 15, 25, 35], util: [12, 28]
+  };
+
+  const CHANCE_CARDS = [
+    { text: "川崎駅へ直行 (給料 $200 獲得)", action: (p) => moveToSquare(p, 0) },
+    { text: "立川駅へ直行 (メガターミナルへ)", action: (p) => moveToSquare(p, 39) },
+    { text: "武蔵小杉駅へ直行 (タワマン街へ)", action: (p) => moveToSquare(p, 37) },
+    { text: "登戸駅へ進む", action: (p) => moveToSquare(p, 31) },
+    { text: "次の南武支線駅へ進む (所有者がいれば2倍運賃)", action: (p) => advanceToNext(p, [5, 15, 25, 35], 2) },
+    { text: "最寄りの変電所/給水所へ進む (ダイス10倍運賃)", action: (p) => advanceToNext(p, [12, 28], 1) },
+    { text: "快速先行運行！特別配当 $50 獲得", action: (p) => { p.money += 50; spawnMoneyFloat(50); } },
+    { text: "踏切安全確認のため 3マス戻る", action: (p) => startMove(p, -3, false) },
+    { text: "車両基地 出場証 (待機解除チケット獲得)", action: (p) => { p.jailPasses++; showEventToast(`${p.name} 出場証獲得`); } },
+    { text: "施設修繕費：駅舎1棟につき$25、駅ビル1棟につき$100支払う", action: (p) => payRepairs(p, 25, 100) },
+    { text: "ホームドア設置協力金 $15 支払い", action: (p) => { p.money -= 15; spawnMoneyFloat(-15); } },
+    { text: "車両回送！車両基地へ直行せよ (給料なし)", action: (p) => sendToJail(p) }
+  ];
+
+  const CHEST_CARDS = [
+    { text: "川崎駅へ直行 (給料 $200 獲得)", action: (p) => moveToSquare(p, 0) },
+    { text: "富士通・NEC通勤輸送の特別助成金 $100 獲得", action: (p) => { p.money += 100; spawnMoneyFloat(100); } },
+    { text: "多摩川花火大会で臨時列車大盛況！$200 獲得", action: (p) => { p.money += 200; spawnMoneyFloat(200); } },
+    { text: "車両清掃・車内美化費用 $50 支払い", action: (p) => { p.money -= 50; spawnMoneyFloat(-50); } },
+    { text: "各プレイヤーから沿線自治体連合会費 $25 を受け取る", action: (p) => collectFromAll(p, 25) },
+    { text: "車両基地 出場証 (待機解除チケット獲得)", action: (p) => { p.jailPasses++; showEventToast(`${p.name} 出場証獲得`); } },
+    { text: "豪雨対策工事：駅舎1棟につき$40、駅ビル1棟につき$115支払う", action: (p) => payRepairs(p, 40, 115) },
+    { text: "車両回送！車両基地へ直行せよ (給料なし)", action: (p) => sendToJail(p) }
+  ];
+
+  const PLAYER_PRESETS = [
+    { id: 1, name: "プレイヤー1", color: "#ffd400", isCPU: false },
+    { id: 2, name: "プレイヤー2", color: "#ea580c", isCPU: true },
+    { id: 3, name: "プレイヤー3", color: "#8b5cf6", isCPU: true },
+    { id: 4, name: "プレイヤー4", color: "#10b981", isCPU: true }
+  ];
+
+  let selectedPlayerCount = 4;
+  let aiLevel = 75;
+  let gameSpeed = 1;
+  let players = [];
+  let currentTurn = 0;
+  let doublesCount = 0;
+  let isGameOver = false;
+  let isMoving = false;
+  let modalActionCallback = null;
+  let lastDiceRoll = [0, 0];
+  let currentAuction = null;
+  let isCpuTradePending = false;
+
+  /* ============================================================
+     2Dカメラ（自由ズーム＆追従固定ON/OFF）
+     ============================================================ */
+  let canvas, ctx;
+  let isFollowing = true; // 追従ON/OFF
+  let currentScale = 1.9;
+  let currentPanX = 0, currentPanY = 0;
+  let targetPanX = 0, targetPanY = 0;
+  let isDragging = false, dragStartX = 0, dragStartY = 0;
+  let pinchStartDist = 0, pinchStartScale = 1.9;
+
+  function rollTrueRandomDie() {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return (array[0] % 6) + 1;
+  }
+
+  function initHomeScreen() {
+    renderRoster();
+  }
+
+  function selectPlayerCount(cnt) {
+    selectedPlayerCount = cnt;
+    document.querySelectorAll(".count-btn").forEach((btn, idx) => {
+      btn.classList.toggle("active", (idx + 2) === cnt);
+    });
+    renderRoster();
+  }
+
+  function updateAiLevelLabel(val) {
+    aiLevel = parseInt(val, 10);
+    let label = "普通";
+    if (aiLevel <= 25) label = "初級";
+    else if (aiLevel <= 60) label = "標準";
+    else if (aiLevel <= 85) label = "熟練";
+    else label = "最強・鉄壁査定";
+    document.getElementById("ai-level-val").innerText = `LEVEL ${aiLevel} (${label})`;
+  }
+
+  function renderRoster() {
+    const container = document.getElementById("roster-container");
+    container.innerHTML = "";
+
+    for (let i = 0; i < selectedPlayerCount; i++) {
+      const preset = PLAYER_PRESETS[i];
+      const row = document.createElement("div");
+      row.className = "player-config-row";
+
+      const meta = document.createElement("div");
+      meta.className = "p-meta";
+      meta.innerHTML = `
+        <span class="color-dot" style="background:${preset.color}"></span>
+        <span>P${preset.id}: ${preset.name}</span>
+      `;
+
+      const btn = document.createElement("button");
+      btn.className = `type-toggle-btn ${preset.isCPU ? 'is-cpu' : ''}`;
+      btn.innerText = preset.isCPU ? "CPU" : "HUMAN";
+      if (i === 0) {
+        btn.disabled = true;
+        btn.innerText = "HUMAN (YOU)";
+      } else {
+        btn.onclick = () => {
+          preset.isCPU = !preset.isCPU;
+          btn.classList.toggle("is-cpu", preset.isCPU);
+          btn.innerText = preset.isCPU ? "CPU" : "HUMAN";
+        };
+      }
+
+      row.appendChild(meta);
+      row.appendChild(btn);
+      container.appendChild(row);
+    }
+  }
+
+  function startGame() {
+    players = [];
+    for (let i = 0; i < selectedPlayerCount; i++) {
+      const p = PLAYER_PRESETS[i];
+      players.push({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        money: 1500,
+        pos: 0,
+        props: [],
+        isCPU: p.isCPU,
+        inJail: false,
+        jailTurns: 0,
+        jailPasses: 0,
+        bankrupt: false
+      });
+    }
+
+    currentTurn = 0;
+    doublesCount = 0;
+    isGameOver = false;
+
+    SQUARES.forEach(sq => {
+      sq.owner = null;
+      sq.houses = 0;
+      sq.mortgaged = false;
+    });
+
+    document.getElementById("home-screen").style.display = "none";
+    initBoard();
+    renderPlayerCardsUI();
+    updateUI();
+    focusSquare(0, true);
+  }
+
+  function backToHome() {
+    if (confirm("ホーム画面に戻りますか？現在の対局は破棄されます。")) {
+      location.reload();
+    }
+  }
+
+  function cycleGameSpeed() {
+    const btn = document.getElementById("speed-toggle-btn");
+    if (gameSpeed === 1) {
+      gameSpeed = 3;
+      btn.innerText = "速度: x3";
+    } else if (gameSpeed === 3) {
+      gameSpeed = 999;
+      btn.innerText = "速度: 瞬時";
+    } else {
+      gameSpeed = 1;
+      btn.innerText = "速度: x1";
+    }
+  }
+
+  /* ============================================================
+     2Dボード描画 ＆ カメラズーム・タッチ操作
+     ============================================================ */
+  function initBoard() {
+    canvas = document.getElementById("game-canvas");
+    ctx = canvas.getContext("2d");
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = 800 * dpr;
+    canvas.height = 800 * dpr;
+    ctx.scale(dpr, dpr);
+
+    setupTouchEvents();
+    drawBoard();
+    animateCamera();
+  }
+
+  /* 追従モードのON/OFF切り替え */
+  function toggleFollowMode() {
+    isFollowing = !isFollowing;
+    const btn = document.getElementById("follow-toggle-btn");
+    btn.classList.toggle("active", isFollowing);
+    btn.innerText = isFollowing ? "追従: ON" : "追従: OFF";
+
+    if (isFollowing) {
+      focusSquare(players[currentTurn].pos);
+    }
+  }
+
+  /* 自由拡大縮小ボタン */
+  function zoomIn() {
+    currentScale = Math.min(currentScale + 0.35, 3.2);
+    if (isFollowing) focusSquare(players[currentTurn].pos);
+  }
+
+  function zoomOut() {
+    currentScale = Math.max(currentScale - 0.35, 0.45);
+    if (isFollowing) focusSquare(players[currentTurn].pos);
+  }
+
+  function fitWholeBoard() {
+    isFollowing = false;
+    document.getElementById("follow-toggle-btn").classList.remove("active");
+    document.getElementById("follow-toggle-btn").innerText = "追従: OFF";
+
+    const viewport = document.getElementById("viewport");
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    currentScale = Math.min(vw / 800, vh / 800) * 0.95;
+    targetPanX = (vw - 800 * currentScale) / 2;
+    targetPanY = (vh - 800 * currentScale) / 2;
+  }
+
+  function focusSquare(sqId, instant = false) {
+    if (!isFollowing) return;
+    const viewport = document.getElementById("viewport");
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+
+    const rect = getSquareRect(sqId);
+    const mx = rect.x + rect.w / 2;
+    const my = rect.y + rect.h / 2;
+
+    targetPanX = vw / 2 - mx * currentScale;
+    targetPanY = vh / 2 - my * currentScale;
+
+    if (instant) {
+      currentPanX = targetPanX;
+      currentPanY = targetPanY;
+    }
+    updateHudBanner(SQUARES[sqId]);
+  }
+
+  function updateHudBanner(sq) {
+    document.getElementById("hud-code").innerText = sq.code || "NL";
+    document.getElementById("hud-name").innerText = sq.name;
+    const owner = players.find(p => p.id === sq.owner);
+    const ownerText = owner ? `${owner.name} 所有` : (sq.price ? `$${sq.price}` : "");
+    document.getElementById("hud-sub").innerText = `${sq.sub || ''} ${ownerText}`;
+  }
+
+  function animateCamera() {
+    const container = document.getElementById("board-transform-container");
+    if (container) {
+      currentPanX += (targetPanX - currentPanX) * 0.14;
+      currentPanY += (targetPanY - currentPanY) * 0.14;
+      container.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
+    }
+    requestAnimationFrame(animateCamera);
+  }
+
+  /* タッチ操作＆ピンチズーム（ダブルタップ誤爆なし） */
+  function setupTouchEvents() {
+    const vp = document.getElementById("viewport");
+
+    vp.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      dragStartX = e.clientX - targetPanX;
+      dragStartY = e.clientY - targetPanY;
+      // ユーザーが手動でドラッグした場合は自動追従を解除
+      if (isFollowing) {
+        toggleFollowMode();
+      }
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      targetPanX = e.clientX - dragStartX;
+      targetPanY = e.clientY - dragStartY;
+    });
+
+    window.addEventListener("pointerup", () => {
+      isDragging = false;
+    });
+
+    // ピンチズーム（2本指拡大縮小）
+    vp.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        isDragging = false;
+        pinchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        pinchStartScale = currentScale;
+      }
+    }, { passive: true });
+
+    vp.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (pinchStartDist > 0) {
+          currentScale = Math.min(Math.max(pinchStartScale * (dist / pinchStartDist), 0.4), 3.2);
+        }
+      }
+    }, { passive: true });
+
+    // マウスホイールズーム
+    vp.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.88;
+      currentScale = Math.min(Math.max(currentScale * zoomFactor, 0.4), 3.2);
+    }, { passive: false });
+  }
+
+  const CORNER_SIZE = 110;
+  const STANDARD_WIDTH = (800 - CORNER_SIZE * 2) / 9; // 約 64.44
+
+  function getSquareRect(id) {
+    if (id === 0) return { x: 800 - CORNER_SIZE, y: 800 - CORNER_SIZE, w: CORNER_SIZE, h: CORNER_SIZE, side: "corner" };
+    if (id < 10) return { x: 800 - CORNER_SIZE - id * STANDARD_WIDTH, y: 800 - CORNER_SIZE, w: STANDARD_WIDTH, h: CORNER_SIZE, side: "bottom" };
+    if (id === 10) return { x: 0, y: 800 - CORNER_SIZE, w: CORNER_SIZE, h: CORNER_SIZE, side: "corner" };
+    if (id < 20) return { x: 0, y: 800 - CORNER_SIZE - (id - 10) * STANDARD_WIDTH, w: CORNER_SIZE, h: STANDARD_WIDTH, side: "left" };
+    if (id === 20) return { x: 0, y: 0, w: CORNER_SIZE, h: CORNER_SIZE, side: "corner" };
+    if (id < 30) return { x: CORNER_SIZE + (id - 21) * STANDARD_WIDTH, y: 0, w: STANDARD_WIDTH, h: CORNER_SIZE, side: "top" };
+    if (id === 30) return { x: 800 - CORNER_SIZE, y: 0, w: CORNER_SIZE, h: CORNER_SIZE, side: "corner" };
+    return { x: 800 - CORNER_SIZE, y: CORNER_SIZE + (id - 31) * STANDARD_WIDTH, w: CORNER_SIZE, h: STANDARD_WIDTH, side: "right" };
+  }
+
+  /* 2Dボード描画 */
+  function drawBoard() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, 800, 800);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 800, 800);
+
+    // 外枠
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, 0, 800, 800);
+
+    // 各マスを描画
+    for (let i = 0; i < 40; i++) {
+      drawSquare(i);
+    }
+
+    // ★マスの中に一周通る「環状線路（レール）」を描画！
+    drawRailwayTrack();
+
+    // 中央グラフィック
+    drawCenterGraphic();
+
+    // ★線路の上を走る「チョロQ風の可愛いミニ電車」を描画！
+    drawChoroQTrains();
+  }
+
+  function drawSquare(id) {
+    const sq = SQUARES[id];
+    const rect = getSquareRect(id);
+
+    ctx.save();
+    ctx.translate(rect.x, rect.y);
+
+    // クリッピングではみ出し遮断
+    ctx.beginPath();
+    ctx.rect(0, 0, rect.w, rect.h);
+    ctx.clip();
+
+    if (sq.owner !== null) {
+      const owner = players.find(p => p.id === sq.owner);
+      ctx.fillStyle = owner ? `${owner.color}15` : "#ffffff";
+    } else {
+      ctx.fillStyle = "#ffffff";
+    }
+    ctx.fillRect(0, 0, rect.w, rect.h);
+
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(0, 0, rect.w, rect.h);
+
+    const BAR = 18;
+
+    // 色帯は外側！
+    if (sq.color) {
+      ctx.fillStyle = sq.color;
+      if (rect.side === "bottom") {
+        ctx.fillRect(0, rect.h - BAR, rect.w, BAR);
+        ctx.strokeRect(0, rect.h - BAR, rect.w, BAR);
+      } else if (rect.side === "left") {
+        ctx.fillRect(0, 0, BAR, rect.h);
+        ctx.strokeRect(0, 0, BAR, rect.h);
+      } else if (rect.side === "top") {
+        ctx.fillRect(0, 0, rect.w, BAR);
+        ctx.strokeRect(0, 0, rect.w, BAR);
+      } else if (rect.side === "right") {
+        ctx.fillRect(rect.w - BAR, 0, BAR, rect.h);
+        ctx.strokeRect(rect.w - BAR, 0, BAR, rect.h);
+      }
+    }
+
+    if (rect.side === "corner") {
+      drawCornerSlot(sq, rect.w, rect.h);
+      ctx.restore();
+      return;
+    }
+
+    ctx.fillStyle = "#0f172a";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    if (rect.side === "bottom") {
+      if (sq.code) {
+        ctx.font = "900 9px sans-serif";
+        ctx.fillText(sq.code, rect.w / 2, 14);
+      }
+      ctx.font = "900 13px sans-serif";
+      ctx.fillText(sq.name, rect.w / 2, 34);
+
+      if (sq.price) {
+        ctx.font = "900 12px sans-serif";
+        ctx.fillText(`$${sq.price}`, rect.w / 2, 58);
+      } else if (sq.sub) {
+        ctx.font = "bold 8.5px sans-serif";
+        ctx.fillStyle = "#ea580c";
+        ctx.fillText(sq.sub, rect.w / 2, 58);
+      }
+      drawHouseIcons(sq, rect.w / 2, 74);
+
+    } else if (rect.side === "top") {
+      drawHouseIcons(sq, rect.w / 2, 30);
+      if (sq.price) {
+        ctx.font = "900 12px sans-serif";
+        ctx.fillText(`$${sq.price}`, rect.w / 2, 48);
+      } else if (sq.sub) {
+        ctx.font = "bold 8.5px sans-serif";
+        ctx.fillStyle = "#ea580c";
+        ctx.fillText(sq.sub, rect.w / 2, 48);
+      }
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "900 13px sans-serif";
+      ctx.fillText(sq.name, rect.w / 2, 70);
+      if (sq.code) {
+        ctx.font = "900 9px sans-serif";
+        ctx.fillText(sq.code, rect.w / 2, 88);
+      }
+
+    } else if (rect.side === "left") {
+      ctx.save();
+      ctx.translate(rect.w / 2 + 8, rect.h / 2);
+      ctx.font = "900 12px sans-serif";
+      ctx.fillText(sq.name, 0, -8);
+      if (sq.price) {
+        ctx.font = "900 11px sans-serif";
+        ctx.fillText(`$${sq.price}`, 0, 10);
+      } else if (sq.sub) {
+        ctx.font = "bold 8px sans-serif";
+        ctx.fillStyle = "#ea580c";
+        ctx.fillText(sq.sub, 0, 10);
+      }
+      ctx.restore();
+      drawHouseIconsVertical(sq, BAR + 6, rect.h / 2);
+
+    } else if (rect.side === "right") {
+      ctx.save();
+      ctx.translate(rect.w / 2 - 8, rect.h / 2);
+      ctx.font = "900 12px sans-serif";
+      ctx.fillText(sq.name, 0, -8);
+      if (sq.price) {
+        ctx.font = "900 11px sans-serif";
+        ctx.fillText(`$${sq.price}`, 0, 10);
+      } else if (sq.sub) {
+        ctx.font = "bold 8px sans-serif";
+        ctx.fillStyle = "#ea580c";
+        ctx.fillText(sq.sub, 0, 10);
+      }
+      ctx.restore();
+      drawHouseIconsVertical(sq, rect.w - BAR - 6, rect.h / 2);
+    }
+
+    ctx.restore();
+  }
+
+  function drawCornerSlot(sq, w, h) {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    if (sq.type === "go") {
+      ctx.fillStyle = "#ffd400";
+      ctx.fillRect(0, 0, w, 28);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "900 18px sans-serif";
+      ctx.fillText("川崎", w / 2, 14);
+      ctx.font = "900 20px sans-serif";
+      ctx.fillText("START", w / 2, 54);
+      ctx.font = "bold 10.5px sans-serif";
+      ctx.fillStyle = "#ea580c";
+      ctx.fillText("給料 $200", w / 2, 84);
+    } else if (sq.type === "jail") {
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(0, 0, w, 28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 13px sans-serif";
+      ctx.fillText("車両基地", w / 2, 14);
+      ctx.fillStyle = "#ea580c";
+      ctx.font = "900 16px sans-serif";
+      ctx.fillText("点検待機", w / 2, 54);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 9.5px sans-serif";
+      ctx.fillText("(見学待機)", w / 2, 84);
+    } else if (sq.type === "parking") {
+      ctx.fillStyle = "#16a34a";
+      ctx.fillRect(0, 0, w, 28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 13px sans-serif";
+      ctx.fillText("多摩川緑地", w / 2, 14);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "900 14px sans-serif";
+      ctx.fillText("河川敷休憩", w / 2, 56);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 9.5px sans-serif";
+      ctx.fillText("無料休憩所", w / 2, 84);
+    } else if (sq.type === "gotojail") {
+      ctx.fillStyle = "#dc2626";
+      ctx.fillRect(0, 0, w, 28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 13px sans-serif";
+      ctx.fillText("車両回送", w / 2, 14);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "900 15px sans-serif";
+      ctx.fillText("基地直行", w / 2, 56);
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 9.5px sans-serif";
+      ctx.fillText("回送命令", w / 2, 84);
+    }
+  }
+
+  function drawHouseIcons(sq, cx, cy) {
+    if (!sq.houses) return;
+    ctx.save();
+    if (sq.houses === 5) {
+      ctx.fillStyle = "#dc2626";
+      ctx.fillRect(cx - 7, cy - 4, 14, 8);
+    } else {
+      ctx.fillStyle = "#16a34a";
+      const startX = cx - (sq.houses * 6) / 2;
+      for (let h = 0; h < sq.houses; h++) {
+        ctx.fillRect(startX + h * 6, cy - 3, 4, 6);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawHouseIconsVertical(sq, cx, cy) {
+    if (!sq.houses) return;
+    ctx.save();
+    if (sq.houses === 5) {
+      ctx.fillStyle = "#dc2626";
+      ctx.fillRect(cx - 4, cy - 7, 8, 14);
+    } else {
+      ctx.fillStyle = "#16a34a";
+      const startY = cy - (sq.houses * 6) / 2;
+      for (let h = 0; h < sq.houses; h++) {
+        ctx.fillRect(cx - 3, startY + h * 6, 6, 4);
+      }
+    }
+    ctx.restore();
+  }
+
+  /* 盤面内周の環状線路（レールと枕木） */
+  function drawRailwayTrack() {
+    ctx.save();
+    const IN = 95; // マス内周寄りのレール中心ライン
+
+    // 枕木（等間隔に配置）
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 14;
+    ctx.setLineDash([4, 6]);
+    ctx.strokeRect(IN, IN, 800 - IN * 2, 800 - IN * 2);
+
+    // 2本の平行レール鋼条（シルバー）
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(IN - 4, IN - 4, (800 - IN * 2) + 8, (800 - IN * 2) + 8);
+    ctx.strokeRect(IN + 4, IN + 4, (800 - IN * 2) - 8, (800 - IN * 2) - 8);
+
+    ctx.restore();
+  }
+
+  /* 線路上を走る可愛いチョロQ電車の描画 */
+  function drawChoroQTrains() {
+    // 駅ごとのプレイヤー滞在数をカウント
+    const stationOccupants = {};
+    players.forEach(p => {
+      if (p.bankrupt) return;
+      stationOccupants[p.pos] = stationOccupants[p.pos] || [];
+      stationOccupants[p.pos].push(p);
+    });
+
+    for (const pos in stationOccupants) {
+      const occupants = stationOccupants[pos];
+      const count = occupants.length;
+      occupants.forEach((p, idx) => {
+        const { x, y, angle } = getTrackCoord(parseInt(pos, 10));
+        drawChoroQTrain(x, y, angle, p, idx, count);
+      });
+    }
+  }
+
+  /* マス番号から線路上の中心座標と電車の角度を取得 */
+  function getTrackCoord(id) {
+    const rect = getSquareRect(id);
+    const IN = 95;
+
+    if (id === 0) return { x: 800 - IN, y: 800 - IN, angle: -Math.PI / 4 };
+    if (id < 10) return { x: rect.x + rect.w / 2, y: 800 - IN, angle: Math.PI }; // 左向き
+    if (id === 10) return { x: IN, y: 800 - IN, angle: -Math.PI * 3 / 4 };
+    if (id < 20) return { x: IN, y: rect.y + rect.h / 2, angle: -Math.PI / 2 }; // 上向き
+    if (id === 20) return { x: IN, y: IN, angle: Math.PI / 4 };
+    if (id < 30) return { x: rect.x + rect.w / 2, y: IN, angle: 0 }; // 右向き
+    if (id === 30) return { x: 800 - IN, y: IN, angle: Math.PI * 3 / 4 };
+    return { x: 800 - IN, y: rect.y + rect.h / 2, angle: Math.PI / 2 }; // 下向き
+  }
+
+  /* チョロQ風ミニ電車のレンダリング */
+  function drawChoroQTrain(x, y, angle, player, idx, total) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // 複数プレイヤーが同一マスにいる場合、線路の前後にずらして表示
+    if (total > 1) {
+      const shift = (idx - (total - 1) / 2) * 16;
+      ctx.translate(shift, 0);
+    }
+
+    const L = 32; // 車体長
+    const W = 19; // 車体幅
+
+    // 車輪の影
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.beginPath();
+    ctx.roundRect(-L / 2 + 1, -W / 2 + 2, L, W, 4);
+    ctx.fill();
+
+    // 車輪 (4つ)
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(-L / 2 + 4, -W / 2 - 2, 6, 2.5);
+    ctx.fillRect(L / 2 - 10, -W / 2 - 2, 6, 2.5);
+    ctx.fillRect(-L / 2 + 4, W / 2 - 0.5, 6, 2.5);
+    ctx.fillRect(L / 2 - 10, W / 2 - 0.5, 6, 2.5);
+
+    // 車体本体（コロッとした丸み）
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(-L / 2, -W / 2, L, W, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    // プレイヤーカラー帯（南武線トリコロール風）
+    ctx.fillStyle = player.color;
+    ctx.fillRect(-L / 2 + 2, -W / 2 + 4, L - 4, 3.5);
+    ctx.fillStyle = "#ea580c";
+    ctx.fillRect(-L / 2 + 2, -W / 2 + 7.5, L - 4, 2);
+
+    // フロントガラス（進行方向前部）
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.roundRect(L / 2 - 6, -W / 2 + 3, 5, W - 6, 2);
+    ctx.fill();
+
+    // ヘッドライト（黄色）
+    ctx.fillStyle = "#fde047";
+    ctx.beginPath();
+    ctx.arc(L / 2 - 1.5, -W / 2 + 5, 1.2, 0, Math.PI * 2);
+    ctx.arc(L / 2 - 1.5, W / 2 - 5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // プレイヤー番号バッジ（屋根に大きくくっきり！）
+    ctx.fillStyle = player.color;
+    ctx.beginPath();
+    ctx.arc(-2, 0, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = (player.id === 1) ? "#0f172a" : "#ffffff";
+    ctx.font = "900 7.5px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`P${player.id}`, -2, 0.2);
+
+    // パンタグラフ（屋根後部）
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-L / 2 + 3, -3.5, 3.5, 7);
+
+    ctx.restore();
+  }
+
+  function drawCenterGraphic() {
+    ctx.save();
+    ctx.translate(400, 400);
+
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillStyle = "#4a1525";
+    ctx.fillRect(-200, -36, 400, 8);
+    ctx.fillStyle = "#ea580c";
+    ctx.fillRect(-200, -28, 400, 12);
+    ctx.fillStyle = "#ffd400";
+    ctx.fillRect(-200, -16, 400, 36);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.roundRect(-140, -30, 280, 60, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "900 30px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("南武ライン", 0, -5);
+
+    ctx.fillStyle = "#475569";
+    ctx.font = "900 11px sans-serif";
+    ctx.fillText("CHORO-Q TYCOON 2D", 0, 16);
+
+    ctx.restore();
+  }
+
+  function showEventToast(msg) {
+    const toast = document.getElementById("event-toast");
+    toast.innerText = msg;
+    toast.classList.add("active");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.classList.remove("active");
+    }, 2200 / gameSpeed);
+  }
+
+  function spawnMoneyFloat(amount) {
+    if (gameSpeed === 999) return;
+    const container = document.getElementById("floating-money-container");
+    const el = document.createElement("div");
+    el.className = `floating-money ${amount >= 0 ? 'gain' : 'loss'}`;
+    el.innerText = `${amount >= 0 ? '+' : ''}$${amount}`;
+    el.style.left = `${window.innerWidth * 0.45 + (Math.random() * 30 - 15)}px`;
+    el.style.top = `${window.innerHeight * 0.25}px`;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
+
+  /* ============================================================
+     ゲーム進行ロジック
+     ============================================================ */
+  function rollDice() {
+    if (isGameOver || isMoving || isCpuTradePending) return;
+
+    const p = players[currentTurn];
+    if (p.bankrupt) {
+      nextTurn();
+      return;
+    }
+
+    const rollBtn = document.getElementById("roll-btn");
+    rollBtn.disabled = true;
+
+    const cube1 = document.getElementById("dice-1");
+    const cube2 = document.getElementById("dice-2");
+    cube1.classList.add("rolling");
+    cube2.classList.add("rolling");
+
+    const d1 = rollTrueRandomDie();
+    const d2 = rollTrueRandomDie();
+    const isDouble = (d1 === d2);
+    lastDiceRoll = [d1, d2];
+
+    const rollDuration = (gameSpeed === 999) ? 0 : 250 / gameSpeed;
+
+    setTimeout(() => {
+      cube1.classList.remove("rolling");
+      cube2.classList.remove("rolling");
+      cube1.innerText = d1;
+      cube2.innerText = d2;
+      handlePostRoll(p, d1, d2, isDouble);
+    }, rollDuration);
+  }
+
+  function handlePostRoll(p, d1, d2, isDouble) {
+    if (p.inJail) {
+      if (isDouble) {
+        p.inJail = false;
+        p.jailTurns = 0;
+        doublesCount = 0;
+        showEventToast(`${p.name} ゾロ目で待機解除！`);
+        startMove(p, d1 + d2, false);
+      } else {
+        p.jailTurns++;
+        if (p.jailTurns >= 3) {
+          p.money -= 50;
+          p.inJail = false;
+          p.jailTurns = 0;
+          spawnMoneyFloat(-50);
+          showEventToast(`保釈金 $50 出所`);
+          checkBankruptcy(p, null);
+          startMove(p, d1 + d2, false);
+        } else {
+          showEventToast(`待機継続 (${p.jailTurns}/3 ターン目)`);
+          finishTurn(false);
+        }
+      }
+      return;
+    }
+
+    if (isDouble) {
+      doublesCount++;
+      if (doublesCount >= 3) {
+        showEventToast(`3連続ゾロ目！緊急回送`);
+        doublesCount = 0;
+        sendToJail(p);
+        finishTurn(false);
+        return;
+      }
+      showEventToast(`ゾロ目！もう一度`);
+    } else {
+      doublesCount = 0;
+    }
+
+    startMove(p, d1 + d2, isDouble);
+  }
+
+  function startMove(p, steps, isDouble) {
+    isMoving = true;
+    updateUI();
+
+    const oldPos = p.pos;
+    let newPos = (oldPos + steps) % 40;
+    if (newPos < 0) newPos += 40;
+    const passedGo = steps > 0 && ((oldPos + steps) >= 40);
+
+    if (gameSpeed === 999) {
+      p.pos = newPos;
+      isMoving = false;
+      drawBoard();
+      focusSquare(newPos);
+      handleSquareArrival(p, newPos, steps, passedGo, isDouble);
+      return;
+    }
+
+    let stepCount = 0;
+    const absSteps = Math.abs(steps);
+    const stepDir = steps >= 0 ? 1 : -1;
+    const hopDuration = 80 / gameSpeed;
+
+    function hop() {
+      if (stepCount >= absSteps) {
+        p.pos = newPos;
+        isMoving = false;
+        drawBoard();
+        focusSquare(newPos);
+        handleSquareArrival(p, newPos, steps, passedGo, isDouble);
+        return;
+      }
+
+      stepCount++;
+      let nextId = (oldPos + stepCount * stepDir) % 40;
+      if (nextId < 0) nextId += 40;
+
+      p.pos = nextId;
+      drawBoard();
+      focusSquare(nextId);
+      setTimeout(hop, hopDuration);
+    }
+    hop();
+  }
+
+  function handleSquareArrival(p, pos, steps, passedGo, isDouble) {
+    const sq = SQUARES[pos];
+
+    if (passedGo && sq.type !== "gotojail") {
+      p.money += 200;
+      spawnMoneyFloat(200);
+      showEventToast(`川崎通過 始発給料 +$200`);
+    }
+
+    updateUI();
+
+    if (sq.type === "go") {
+      finishTurn(isDouble);
+    } else if (sq.type === "tax") {
+      p.money -= sq.amount;
+      spawnMoneyFloat(-sq.amount);
+      showEventToast(`税金納付 -$${sq.amount}`);
+      if (checkBankruptcy(p, null)) return;
+      finishTurn(isDouble);
+    } else if (sq.type === "gotojail") {
+      showEventToast(`車両回送！基地へ直行`);
+      sendToJail(p);
+      finishTurn(false);
+    } else if (sq.type === "chance") {
+      drawCard(p, CHANCE_CARDS, "運行ダイヤ情報", isDouble);
+    } else if (sq.type === "chest") {
+      drawCard(p, CHEST_CARDS, "沿線トピックス", isDouble);
+    } else if (sq.type === "parking" || sq.type === "jail") {
+      finishTurn(isDouble);
+    } else if (sq.price) {
+      handlePropertyLanding(p, sq, isDouble);
+    }
+  }
+
+  function handlePropertyLanding(p, sq, isDouble) {
+    if (sq.owner === null) {
+      if (p.money >= sq.price) {
+        if (p.isCPU) {
+          handleCpuDecision(p, sq, "buy", isDouble);
+        } else {
+          showModal(
+            `${sq.name}駅 (${sq.code})`,
+            sq.color,
+            `価格: $${sq.price} / 基本運賃: $${sq.rent ? sq.rent[0] : 25}\n\n空き駅です。この駅を購入しますか？\n（見送った場合は直ちに沿線公開競売が開始されます）`,
+            `購入 ($${sq.price})`,
+            "見送る (競売へ)",
+            (confirm) => {
+              if (confirm) {
+                p.money -= sq.price;
+                sq.owner = p.id;
+                p.props.push(sq);
+                spawnMoneyFloat(-sq.price);
+                showEventToast(`${sq.name}駅 を買収！`);
+                drawBoard();
+                finishTurn(isDouble);
+              } else {
+                startAuction(sq, isDouble);
+              }
+            }
+          );
+        }
+      } else {
+        showEventToast(`購入資金不足のため競売開始`);
+        startAuction(sq, isDouble);
+      }
+    } else if (sq.owner === p.id) {
+      showEventToast(`自社所有駅に到着`);
+      finishTurn(isDouble);
+    } else {
+      const owner = players.find(pl => pl.id === sq.owner);
+      if (sq.mortgaged) {
+        showEventToast(`抵当中のため運賃免除`);
+      } else {
+        const rent = calculateRent(sq, lastDiceRoll[0] + lastDiceRoll[1]);
+        p.money -= rent;
+        owner.money += rent;
+        spawnMoneyFloat(-rent);
+        showEventToast(`${owner.name} へ運賃 $${rent} 支払い`);
+        if (checkBankruptcy(p, owner)) return;
+      }
+      finishTurn(isDouble);
+    }
+  }
+
+  /* 競売 */
+  function startAuction(sq, isDouble) {
+    currentAuction = {
+      sq: sq,
+      isDouble: isDouble,
+      highestBid: 10,
+      highestBidder: null,
+      activeBidders: players.filter(p => !p.bankrupt),
+      currentBidderIndex: 0
+    };
+
+    document.getElementById("auction-prop-name").innerText = `${sq.name}駅 (${sq.code}) - 定価 $${sq.price}`;
+    document.getElementById("auction-current-price").innerText = `$${currentAuction.highestBid}`;
+    document.getElementById("auction-current-bidder").innerText = `最高入札者: なし`;
+    document.getElementById("auction-modal").classList.add("active");
+
+    processAuctionTurn();
+  }
+
+  function processAuctionTurn() {
+    if (currentAuction.activeBidders.length <= 1 && currentAuction.highestBidder) {
+      concludeAuction();
+      return;
+    }
+    if (currentAuction.activeBidders.length === 0) {
+      closeAuctionModal();
+      showEventToast(`競売不成立：銀行預かり`);
+      finishTurn(currentAuction.isDouble);
+      return;
+    }
+
+    const bidder = currentAuction.activeBidders[currentAuction.currentBidderIndex];
+    if (bidder.isCPU) {
+      handleCpuAuctionTurn(bidder);
+    } else {
+      document.getElementById("auction-controls").style.display = "grid";
+    }
+  }
+
+  function placeAuctionBid(increment) {
+    const me = currentAuction.activeBidders[currentAuction.currentBidderIndex];
+    const newBid = currentAuction.highestBid + increment;
+
+    if (newBid > me.money) {
+      alert("所持金を超える入札はできません。");
+      return;
+    }
+
+    currentAuction.highestBid = newBid;
+    currentAuction.highestBidder = me;
+
+    document.getElementById("auction-current-price").innerText = `$${newBid}`;
+    document.getElementById("auction-current-bidder").innerText = `最高入札者: ${me.name}`;
+    advanceAuctionBidder();
+  }
+
+  function passAuctionBid() {
+    currentAuction.activeBidders.splice(currentAuction.currentBidderIndex, 1);
+    if (currentAuction.currentBidderIndex >= currentAuction.activeBidders.length) {
+      currentAuction.currentBidderIndex = 0;
+    }
+    processAuctionTurn();
+  }
+
+  function advanceAuctionBidder() {
+    currentAuction.currentBidderIndex = (currentAuction.currentBidderIndex + 1) % currentAuction.activeBidders.length;
+    processAuctionTurn();
+  }
+
+  function handleCpuAuctionTurn(cpu) {
+    document.getElementById("auction-controls").style.display = "none";
+    const sq = currentAuction.sq;
+    const iq = aiLevel / 100;
+
+    setTimeout(() => {
+      let maxVal = sq.price * (0.6 + iq * 0.7);
+      if (COLOR_GROUPS[sq.group]?.some(id => SQUARES[id].owner === cpu.id)) {
+        maxVal *= 1.8;
+      }
+
+      const nextBid = currentAuction.highestBid + 10;
+      if (nextBid <= maxVal && nextBid <= cpu.money - 50) {
+        currentAuction.highestBid = nextBid;
+        currentAuction.highestBidder = cpu;
+        document.getElementById("auction-current-price").innerText = `$${nextBid}`;
+        document.getElementById("auction-current-bidder").innerText = `最高入札者: ${cpu.name}`;
+        advanceAuctionBidder();
+      } else {
+        passAuctionBid();
+      }
+    }, 400 / gameSpeed);
+  }
+
+  function concludeAuction() {
+    const winner = currentAuction.highestBidder;
+    const sq = currentAuction.sq;
+    const price = currentAuction.highestBid;
+
+    winner.money -= price;
+    sq.owner = winner.id;
+    winner.props.push(sq);
+    drawBoard();
+    updateUI();
+
+    closeAuctionModal();
+    showEventToast(`落札！${winner.name} が $${price} で獲得`);
+
+    finishTurn(currentAuction.isDouble);
+  }
+
+  function closeAuctionModal() {
+    document.getElementById("auction-modal").classList.remove("active");
+    currentAuction = null;
+  }
+
+  /* ============================================================
+     資産管理マネージャー
+     ============================================================ */
+  function openManagerModal() {
+    if (players[currentTurn].isCPU || isMoving || isGameOver || isCpuTradePending) return;
+
+    const p = players[currentTurn];
+    const list = document.getElementById("manager-property-list");
+    list.innerHTML = "";
+
+    if (p.props.length === 0) {
+      list.innerHTML = `<p style="font-size:11px; color:#94a3b8; text-align:center; padding:12px;">所有している駅がありません。</p>`;
+    } else {
+      p.props.forEach(sq => {
+        const isMono = checkMonopoly(p.id, sq.group);
+        const canBuild = sq.type === "prop" && isMono && canBuildHouse(sq) && p.money >= sq.houseCost;
+        const canSell = sq.houses > 0;
+        const canMortgage = !sq.mortgaged && sq.houses === 0;
+        const canUnmortgage = sq.mortgaged && p.money >= Math.floor(sq.price * 0.55);
+
+        const row = document.createElement("div");
+        row.className = "manager-row";
+        row.innerHTML = `
+          <div>
+            <span style="font-weight:900; color:${sq.color || '#0f172a'};">${sq.name}</span>
+            <span style="font-weight:800; font-size:9px;">${sq.mortgaged ? '【抵当中】' : (sq.houses === 5 ? '★駅ビル' : (sq.houses > 0 ? `+${sq.houses}棟` : '更地'))}</span>
+          </div>
+          <div style="display:flex; gap:2px;">
+            ${canBuild ? `<button class="btn-mgr-mini" onclick="buildHouseManager(${sq.id})">+増築 ($${sq.houseCost})</button>` : ''}
+            ${canSell ? `<button class="btn-mgr-mini" onclick="sellHouseManager(${sq.id})">-売却 (+$${sq.houseCost/2})</button>` : ''}
+            ${canMortgage ? `<button class="btn-mgr-mini" onclick="mortgagePropManager(${sq.id})">抵当 (+$${sq.price/2})</button>` : ''}
+            ${canUnmortgage ? `<button class="btn-mgr-mini" onclick="unmortgagePropManager(${sq.id})">解除 (-$${Math.floor(sq.price*0.55)})</button>` : ''}
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    document.getElementById("manager-modal").classList.add("active");
+  }
+
+  function closeManagerModal() {
+    document.getElementById("manager-modal").classList.remove("active");
+  }
+
+  function buildHouseManager(sqId) {
+    const p = players[currentTurn];
+    const sq = SQUARES[sqId];
+    p.money -= sq.houseCost;
+    sq.houses++;
+    spawnMoneyFloat(-sq.houseCost);
+    drawBoard();
+    updateUI();
+    openManagerModal();
+  }
+
+  function sellHouseManager(sqId) {
+    const p = players[currentTurn];
+    const sq = SQUARES[sqId];
+    sq.houses--;
+    p.money += Math.floor(sq.houseCost / 2);
+    spawnMoneyFloat(Math.floor(sq.houseCost / 2));
+    drawBoard();
+    updateUI();
+    openManagerModal();
+  }
+
+  function mortgagePropManager(sqId) {
+    const p = players[currentTurn];
+    const sq = SQUARES[sqId];
+    sq.mortgaged = true;
+    p.money += Math.floor(sq.price / 2);
+    spawnMoneyFloat(Math.floor(sq.price / 2));
+    drawBoard();
+    updateUI();
+    openManagerModal();
+  }
+
+  function unmortgagePropManager(sqId) {
+    const p = players[currentTurn];
+    const sq = SQUARES[sqId];
+    const cost = Math.floor(sq.price * 0.55);
+    p.money -= cost;
+    sq.mortgaged = false;
+    spawnMoneyFloat(-cost);
+    drawBoard();
+    updateUI();
+    openManagerModal();
+  }
+
+  function calculateRent(sq, diceSum) {
+    if (sq.type === "railroad") {
+      const owned = COLOR_GROUPS.rr.filter(id => SQUARES[id].owner === sq.owner && !SQUARES[id].mortgaged).length;
+      return [0, 25, 50, 100, 200][owned] || 25;
+    }
+    if (sq.type === "utility") {
+      const owned = COLOR_GROUPS.util.filter(id => SQUARES[id].owner === sq.owner && !SQUARES[id].mortgaged).length;
+      return (owned === 2) ? diceSum * 10 : diceSum * 4;
+    }
+    if (sq.type === "prop") {
+      if (sq.houses === 0) {
+        const isMono = checkMonopoly(sq.owner, sq.group);
+        return isMono ? sq.rent[0] * 2 : sq.rent[0];
+      }
+      return sq.rent[sq.houses] || sq.rent[0];
+    }
+    return 0;
+  }
+
+  function checkMonopoly(playerId, groupKey) {
+    const ids = COLOR_GROUPS[groupKey];
+    if (!ids) return false;
+    return ids.every(id => SQUARES[id].owner === playerId);
+  }
+
+  function canBuildHouse(sq) {
+    if (sq.houses >= 5) return false;
+    const groupSquares = COLOR_GROUPS[sq.group].map(id => SQUARES[id]);
+    const minHouses = Math.min(...groupSquares.map(s => s.houses));
+    return (sq.houses === minHouses);
+  }
+
+  function handleCpuDecision(cpu, sq, mode, isDouble) {
+    setTimeout(() => {
+      let willAct = false;
+      const iq = aiLevel / 100;
+
+      if (mode === "buy") {
+        const minReserve = 200 * (1.0 - iq * 0.5);
+        const hasOthers = COLOR_GROUPS[sq.group]?.some(id => SQUARES[id].owner === cpu.id);
+        if (iq > 0.6) {
+          if ((cpu.money - sq.price >= minReserve) || (hasOthers && cpu.money >= sq.price)) {
+            willAct = true;
+          }
+        } else {
+          if (cpu.money >= sq.price && Math.random() < (0.5 + iq * 0.5)) {
+            willAct = true;
+          }
+        }
+      }
+
+      if (willAct) {
+        cpu.money -= sq.price;
+        sq.owner = cpu.id;
+        cpu.props.push(sq);
+        spawnMoneyFloat(-sq.price);
+        showEventToast(`[CPU] ${sq.name}駅 を買収`);
+        drawBoard();
+        finishTurn(isDouble);
+      } else {
+        startAuction(sq, isDouble);
+      }
+    }, 450 / gameSpeed);
+  }
+
+  /* ============================================================
+     トレードAI & 安定性強化
+     ============================================================ */
+  function openTradeModal() {
+    if (players[currentTurn].isCPU || isMoving || isGameOver || isCpuTradePending) return;
+
+    const p = players[currentTurn];
+    const select = document.getElementById("trade-target-select");
+    select.innerHTML = "";
+
+    const targets = players.filter(pl => pl.id !== p.id && !pl.bankrupt);
+    if (targets.length === 0) {
+      alert("交渉可能な相手がいません。");
+      return;
+    }
+
+    targets.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.innerText = `${t.name} (資金 $${t.money} / 駅 ${t.props.length}件)`;
+      select.appendChild(opt);
+    });
+
+    renderTradeItems();
+    document.getElementById("trade-modal").classList.add("active");
+  }
+
+  function closeTradeModal() {
+    document.getElementById("trade-modal").classList.remove("active");
+  }
+
+  function renderTradeItems() {
+    const me = players[currentTurn];
+    const targetId = parseInt(document.getElementById("trade-target-select").value, 10);
+    const target = players.find(pl => pl.id === targetId);
+
+    const myList = document.getElementById("my-trade-props");
+    const targetList = document.getElementById("target-trade-props");
+    myList.innerHTML = "";
+    targetList.innerHTML = "";
+
+    me.props.forEach(sq => {
+      const label = document.createElement("label");
+      label.style.display = "flex"; label.style.gap = "4px";
+      label.innerHTML = `<input type="checkbox" value="${sq.id}" class="my-prop-check" onchange="updateTradeDialogue()"> ${sq.name} ($${sq.price})`;
+      myList.appendChild(label);
+    });
+    if (me.props.length === 0) myList.innerHTML = `<span style="font-size:9px; color:#94a3b8;">所有駅なし</span>`;
+
+    if (target) {
+      target.props.forEach(sq => {
+        const label = document.createElement("label");
+        label.style.display = "flex"; label.style.gap = "4px";
+        label.innerHTML = `<input type="checkbox" value="${sq.id}" class="target-prop-check" onchange="updateTradeDialogue()"> ${sq.name} ($${sq.price})`;
+        targetList.appendChild(label);
+      });
+      if (target.props.length === 0) targetList.innerHTML = `<span style="font-size:9px; color:#94a3b8;">所有駅なし</span>`;
+    }
+
+    document.getElementById("my-trade-cash").value = "0";
+    document.getElementById("target-trade-cash").value = "0";
+    updateTradeDialogue();
+  }
+
+  function updateTradeDialogue() {
+    const me = players[currentTurn];
+    const targetId = parseInt(document.getElementById("trade-target-select").value, 10);
+    const target = players.find(pl => pl.id === targetId);
+    if (!target) return;
+
+    const myPropIds = Array.from(document.querySelectorAll(".my-prop-check:checked")).map(cb => parseInt(cb.value, 10));
+    const targetPropIds = Array.from(document.querySelectorAll(".target-prop-check:checked")).map(cb => parseInt(cb.value, 10));
+
+    const myCash = parseInt(document.getElementById("my-trade-cash").value, 10) || 0;
+    const targetCash = parseInt(document.getElementById("target-trade-cash").value, 10) || 0;
+
+    const myPropNames = myPropIds.map(id => `【${SQUARES[id].name}】`).join(" と ");
+    const targetPropNames = targetPropIds.map(id => `【${SQUARES[id].name}】`).join(" と ");
+
+    let giveText = myPropNames;
+    if (myCash > 0) giveText += (giveText ? ` および資金 $${myCash}` : `資金 $${myCash}`);
+
+    let wantText = targetPropNames;
+    if (targetCash > 0) wantText += (wantText ? ` および資金 $${targetCash}` : `資金 $${targetCash}`);
+
+    const preview = document.getElementById("trade-dialogue-preview");
+    if (!giveText && !wantText) {
+      preview.innerText = "提供または要求する物件・資金を選択してください。";
+    } else {
+      preview.innerText = `「${target.name}様、私どもの${giveText || '条件'}で、貴殿の${wantText || '条件'}を交換していただけないでしょうか？」`;
+    }
+  }
+
+  function submitTradeProposal() {
+    const me = players[currentTurn];
+    const targetId = parseInt(document.getElementById("trade-target-select").value, 10);
+    const target = players.find(pl => pl.id === targetId);
+    if (!target) return;
+
+    const myPropIds = Array.from(document.querySelectorAll(".my-prop-check:checked")).map(cb => parseInt(cb.value, 10));
+    const targetPropIds = Array.from(document.querySelectorAll(".target-prop-check:checked")).map(cb => parseInt(cb.value, 10));
+    const myCash = parseInt(document.getElementById("my-trade-cash").value, 10) || 0;
+    const targetCash = parseInt(document.getElementById("target-trade-cash").value, 10) || 0;
+
+    if (myCash > me.money) { alert("提供資金が所持金を超えています。"); return; }
+    if (targetCash > target.money) { alert("要求資金が相手の所持金を超えています。"); return; }
+    if (myPropIds.length === 0 && myCash === 0 && targetPropIds.length === 0 && targetCash === 0) {
+      alert("交換内容を選択してください。"); return;
+    }
+
+    closeTradeModal();
+
+    if (target.isCPU) {
+      evaluateCpuTrade(me, target, myPropIds, targetPropIds, myCash, targetCash);
+    } else {
+      const dialogue = document.getElementById("trade-dialogue-preview").innerText;
+      showModal(
+        "トレード提案の受託確認",
+        "#ffd400",
+        `${dialogue}\n\nこの提案を受諾しますか？`,
+        "受諾する",
+        "拒否する",
+        (accept) => {
+          if (accept) {
+            executeTrade(me, target, myPropIds, targetPropIds, myCash, targetCash);
+            showEventToast(`トレード成立！`);
+          } else {
+            showEventToast(`提案は辞退されました`);
+          }
+        }
+      );
+    }
+  }
+
+  function evaluateCpuTrade(proposer, cpu, givePropIds, wantPropIds, giveCash, wantCash) {
+    showEventToast(`[CPU] 提案を査定中...`);
+
+    setTimeout(() => {
+      const iq = aiLevel / 100;
+      let giveValue = giveCash;
+      givePropIds.forEach(id => {
+        const sq = SQUARES[id];
+        giveValue += sq.price;
+        if (willCompleteMonopoly(cpu.id, sq.group, givePropIds)) giveValue += sq.price * 2.5;
+      });
+
+      let wantValue = wantCash;
+      let assistOpponentMonopoly = false;
+      wantPropIds.forEach(id => {
+        const sq = SQUARES[id];
+        wantValue += sq.price;
+        if (willCompleteMonopoly(proposer.id, sq.group, wantPropIds)) {
+          assistOpponentMonopoly = true;
+          wantValue += sq.price * (2.0 + iq * 3.0);
+        }
+      });
+
+      let accepted = false;
+      if (iq >= 0.8) {
+        if (!assistOpponentMonopoly && giveValue >= wantValue * 1.1) accepted = true;
+      } else if (iq >= 0.4) {
+        if (giveValue >= wantValue * 0.95) accepted = true;
+      } else {
+        if (giveValue >= wantValue * 0.7 || Math.random() < 0.4) accepted = true;
+      }
+
+      if (accepted) {
+        executeTrade(proposer, cpu, givePropIds, wantPropIds, giveCash, wantCash);
+        showEventToast(`[交渉成立] ${cpu.name} が受諾！`);
+      } else {
+        showEventToast(`[交渉決裂] ${cpu.name}「お断りします」`);
+      }
+      updateUI();
+    }, 600 / gameSpeed);
+  }
+
+  function tryCpuInitiateTrade(cpu, onDone) {
+    if (aiLevel < 30 || cpu.bankrupt || cpu.props.length === 0) {
+      onDone();
+      return;
+    }
+
+    for (const groupKey in COLOR_GROUPS) {
+      if (groupKey === "rr" || groupKey === "util") continue;
+      const ids = COLOR_GROUPS[groupKey];
+      const myCount = ids.filter(id => SQUARES[id].owner === cpu.id).length;
+
+      if (myCount === ids.length - 1) {
+        const neededId = ids.find(id => SQUARES[id].owner !== cpu.id && SQUARES[id].owner !== null);
+        if (neededId) {
+          const target = players.find(p => p.id === SQUARES[neededId].owner);
+          if (target && !target.bankrupt) {
+            const offerProp = cpu.props.find(p => p.group !== groupKey && p.houses === 0);
+            const offerCash = Math.min(Math.max(0, cpu.money - 150), 150);
+
+            if (offerProp || offerCash > 0) {
+              isCpuTradePending = true;
+              updateUI();
+
+              const dialogue = `「${target.name}様、私どもの${offerProp ? '【' + offerProp.name + '】' : ''}${offerCash > 0 ? ' および資金 $' + offerCash : ''}で、貴殿の【${SQUARES[neededId].name}】を交換していただけないでしょうか？」`;
+
+              if (!target.isCPU) {
+                showModal(
+                  `CPUからのトレード提案 (${cpu.name})`,
+                  cpu.color,
+                  `${dialogue}`,
+                  "受諾する",
+                  "断る",
+                  (accept) => {
+                    isCpuTradePending = false;
+                    if (accept) {
+                      executeTrade(cpu, target, offerProp ? [offerProp.id] : [], [neededId], offerCash, 0);
+                      showEventToast(`トレード成立！`);
+                    } else {
+                      showEventToast(`提案をお断りしました`);
+                    }
+                    updateUI();
+                    onDone();
+                  }
+                );
+                return;
+              } else {
+                setTimeout(() => {
+                  isCpuTradePending = false;
+                  if (Math.random() < 0.5) {
+                    executeTrade(cpu, target, offerProp ? [offerProp.id] : [], [neededId], offerCash, 0);
+                    showEventToast(`[CPU間トレード成立]`);
+                  }
+                  updateUI();
+                  onDone();
+                }, 500 / gameSpeed);
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+    onDone();
+  }
+
+  function willCompleteMonopoly(targetPlayerId, groupKey, acquiredPropIds) {
+    const groupSquares = COLOR_GROUPS[groupKey].map(id => SQUARES[id]);
+    const remaining = groupSquares.filter(s => s.owner !== targetPlayerId && !acquiredPropIds.includes(s.id));
+    return (remaining.length === 0);
+  }
+
+  function executeTrade(p1, p2, p1GiveProps, p2GiveProps, p1Cash, p2Cash) {
+    p1.money -= p1Cash;
+    p2.money += p1Cash;
+    p2.money -= p2Cash;
+    p1.money += p2Cash;
+
+    p1GiveProps.forEach(id => {
+      const sq = SQUARES[id];
+      sq.owner = p2.id;
+      p1.props = p1.props.filter(pr => pr.id !== id);
+      p2.props.push(sq);
+    });
+
+    p2GiveProps.forEach(id => {
+      const sq = SQUARES[id];
+      sq.owner = p1.id;
+      p2.props = p2.props.filter(pr => pr.id !== id);
+      p1.props.push(sq);
+    });
+
+    drawBoard();
+    updateUI();
+  }
+
+  /* カード共通アクション */
+  function drawCard(p, deck, deckName, isDouble) {
+    const card = deck.shift();
+    deck.push(card);
+
+    showEventToast(`【${deckName}】${card.text}`);
+
+    setTimeout(() => {
+      card.action(p);
+      updateUI();
+      if (!checkBankruptcy(p, null)) {
+        finishTurn(isDouble);
+      }
+    }, 600 / gameSpeed);
+  }
+
+  function advanceToNext(p, idList, multiplier) {
+    let nextId = idList.find(id => id > p.pos);
+    if (!nextId) nextId = idList[0];
+    const steps = (nextId >= p.pos) ? (nextId - p.pos) : (40 - p.pos + nextId);
+    startMove(p, steps, false);
+  }
+
+  function moveToSquare(p, targetId) {
+    const steps = (targetId >= p.pos) ? (targetId - p.pos) : (40 - p.pos + targetId);
+    startMove(p, steps, false);
+  }
+
+  function payRepairs(p, houseRate, hotelRate) {
+    let cost = 0;
+    p.props.forEach(sq => {
+      if (sq.houses === 5) cost += hotelRate;
+      else if (sq.houses > 0) cost += sq.houses * houseRate;
+    });
+    p.money -= cost;
+    spawnMoneyFloat(-cost);
+  }
+
+  function collectFromAll(p, amount) {
+    players.forEach(other => {
+      if (other.id !== p.id && !other.bankrupt) {
+        other.money -= amount;
+        p.money += amount;
+      }
+    });
+    spawnMoneyFloat(amount * (players.filter(pl=>!pl.bankrupt).length - 1));
+  }
+
+  function sendToJail(p) {
+    p.pos = 10;
+    p.inJail = true;
+    p.jailTurns = 0;
+    drawBoard();
+    focusSquare(10);
+    showEventToast(`${p.name} 車両基地待機`);
+    updateUI();
+  }
+
+  function payJailFine() {
+    const p = players[currentTurn];
+    if (p.inJail && p.money >= 50) {
+      p.money -= 50;
+      p.inJail = false;
+      p.jailTurns = 0;
+      spawnMoneyFloat(-50);
+      showEventToast(`保釈金 $50 出所完了`);
+      updateUI();
+    }
+  }
+
+  function useJailPass() {
+    const p = players[currentTurn];
+    if (p.inJail && p.jailPasses > 0) {
+      p.jailPasses--;
+      p.inJail = false;
+      p.jailTurns = 0;
+      showEventToast(`出場証を使用して待機解除！`);
+      updateUI();
+    }
+  }
+
+  function checkBankruptcy(p, creditor) {
+    if (p.money < 0) {
+      tryLiquidateAssets(p);
+
+      if (p.money < 0) {
+        p.bankrupt = true;
+        showEventToast(`[破産] ${p.name} が脱落！`);
+
+        if (creditor) {
+          p.props.forEach(sq => {
+            sq.owner = creditor.id;
+            creditor.props.push(sq);
+          });
+          if (p.money > 0) creditor.money += p.money;
+          creditor.jailPasses += p.jailPasses;
+          showEventToast(`全遺産を ${creditor.name} へ譲渡`);
+        } else {
+          p.props.forEach(sq => {
+            sq.owner = null;
+            sq.houses = 0;
+            sq.mortgaged = false;
+          });
+        }
+
+        p.props = [];
+        drawBoard();
+        updateUI();
+
+        const activePlayers = players.filter(pl => !pl.bankrupt);
+        if (activePlayers.length === 1) {
+          isGameOver = true;
+          alert(`ゲーム終了！ 勝者は ${activePlayers[0].name} です！`);
+          return true;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function tryLiquidateAssets(p) {
+    p.props.forEach(sq => {
+      while (sq.houses > 0 && p.money < 0) {
+        sq.houses--;
+        p.money += Math.floor(sq.houseCost / 2);
+        spawnMoneyFloat(Math.floor(sq.houseCost / 2));
+      }
+    });
+    p.props.forEach(sq => {
+      if (!sq.mortgaged && p.money < 0) {
+        sq.mortgaged = true;
+        p.money += Math.floor(sq.price / 2);
+        spawnMoneyFloat(Math.floor(sq.price / 2));
+      }
+    });
+  }
+
+  function finishTurn(isDouble) {
+    drawBoard();
+    if (isDouble && !isGameOver && !players[currentTurn].inJail) {
+      updateUI();
+      if (players[currentTurn].isCPU) {
+        triggerCpuTurn();
+      }
+    } else {
+      doublesCount = 0;
+      nextTurn();
+    }
+  }
+
+  function nextTurn() {
+    do {
+      currentTurn = (currentTurn + 1) % players.length;
+    } while (players[currentTurn].bankrupt);
+
+    updateUI();
+    focusSquare(players[currentTurn].pos);
+
+    if (!isGameOver && players[currentTurn].isCPU) {
+      triggerCpuTurn();
+    }
+  }
+
+  function triggerCpuTurn() {
+    const p = players[currentTurn];
+    const rollBtn = document.getElementById("roll-btn");
+    rollBtn.disabled = true;
+    rollBtn.innerText = "CPU 思考中...";
+    updateUI();
+
+    tryCpuInitiateTrade(p, () => {
+      if (isGameOver || !p.isCPU) return;
+
+      if (aiLevel > 40) {
+        p.props.forEach(sq => {
+          if (sq.type === "prop" && checkMonopoly(p.id, sq.group) && canBuildHouse(sq)) {
+            if (p.money >= sq.houseCost + 250) {
+              p.money -= sq.houseCost;
+              sq.houses++;
+              showEventToast(`[CPU] ${sq.name} に増築！`);
+            }
+          }
+        });
+      }
+
+      setTimeout(() => {
+        if (isGameOver || !p.isCPU) return;
+
+        if (p.inJail) {
+          if (p.jailPasses > 0) {
+            p.jailPasses--;
+            p.inJail = false;
+            p.jailTurns = 0;
+            showEventToast(`[CPU] 出場証で待機解除`);
+          } else if (p.money >= 300) {
+            p.money -= 50;
+            p.inJail = false;
+            p.jailTurns = 0;
+            spawnMoneyFloat(-50);
+            showEventToast(`[CPU] 保釈金待機解除`);
+          }
+        }
+
+        rollDice();
+      }, 700 / gameSpeed);
+    });
+  }
+
+  /* ============================================================
+     UI更新 & ボタンロック
+     ============================================================ */
+  function renderPlayerCardsUI() {
+    const list = document.getElementById("players-list-box");
+    list.innerHTML = "";
+
+    players.forEach((p) => {
+      const card = document.createElement("div");
+      card.id = `card-p${p.id}`;
+      card.className = "player-card";
+      card.innerHTML = `
+        <div class="p-head">
+          <div class="p-name-badge">
+            <span class="color-dot" style="background:${p.color}"></span>
+            <span>${p.name}</span>
+            <span style="font-size:7.5px; background:#e2e8f0; padding:1px 3px; border-radius:2px;">${p.isCPU ? 'CPU' : 'YOU'}</span>
+          </div>
+          <div>
+            <span id="jail-tag-p${p.id}" style="display:none; font-size:7.5px; background:#ea580c; color:#fff; padding:1px 3px; border-radius:2px;">待機</span>
+            <span id="pass-tag-p${p.id}" style="display:none; font-size:7.5px; background:#0284c7; color:#fff; padding:1px 3px; border-radius:2px;">証</span>
+          </div>
+        </div>
+        <div class="p-money" id="money-p${p.id}">$${p.money}</div>
+        <div class="p-props-list" id="props-p${p.id}"></div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  function updateUI() {
+    players.forEach(p => {
+      const mEl = document.getElementById(`money-p${p.id}`);
+      const prEl = document.getElementById(`props-p${p.id}`);
+      const jEl = document.getElementById(`jail-tag-p${p.id}`);
+      const passEl = document.getElementById(`pass-tag-p${p.id}`);
+      const card = document.getElementById(`card-p${p.id}`);
+
+      if (mEl) mEl.innerText = `$${p.money}`;
+      if (jEl) jEl.style.display = p.inJail ? "inline" : "none";
+      if (passEl) passEl.style.display = p.jailPasses > 0 ? "inline" : "none";
+      if (card) {
+        card.classList.toggle("active-turn", currentTurn === (p.id - 1) && !isGameOver);
+        card.classList.toggle("bankrupted", p.bankrupt);
+      }
+
+      if (prEl) {
+        prEl.innerHTML = p.props.map(pr => {
+          const mClass = pr.mortgaged ? 'mortgaged' : '';
+          const hText = pr.houses === 5 ? '★' : (pr.houses > 0 ? `+${pr.houses}` : '');
+          return `<span class="prop-chip ${mClass}" style="background:${pr.color || '#475569'};" onclick="showStationDetails(${pr.id})">${pr.name}${hText}</span>`;
+        }).join("");
+      }
+    });
+
+    const activeP = players[currentTurn];
+    const indicatorName = document.getElementById("turn-name");
+    const indicatorDot = document.getElementById("turn-dot");
+    if (indicatorName && activeP) {
+      indicatorName.innerText = `P${activeP.id}`;
+      indicatorDot.style.background = activeP.color;
+    }
+
+    const rollBtn = document.getElementById("roll-btn");
+    const jailPayBtn = document.getElementById("jail-pay-btn");
+    const jailPassBtn = document.getElementById("jail-pass-btn");
+    const manageBtn = document.getElementById("manage-btn");
+    const tradeBtn = document.getElementById("trade-btn");
+
+    const isHumanTurn = (activeP && !activeP.isCPU && !activeP.bankrupt && !isMoving && !isGameOver && !isCpuTradePending);
+
+    tradeBtn.disabled = !isHumanTurn;
+    manageBtn.disabled = !isHumanTurn;
+
+    if (activeP.isCPU) {
+      rollBtn.disabled = true;
+      rollBtn.innerText = "CPU 手番中...";
+      jailPayBtn.style.display = "none";
+      jailPassBtn.style.display = "none";
+    } else {
+      rollBtn.disabled = !isHumanTurn;
+      rollBtn.innerText = "ダイスを振る (2D6)";
+      jailPayBtn.style.display = (activeP.inJail && activeP.money >= 50 && !isMoving) ? "block" : "none";
+      jailPassBtn.style.display = (activeP.inJail && activeP.jailPasses > 0 && !isMoving) ? "block" : "none";
+    }
+  }
+
+  function showModal(title, barColor, descHtml, confirmText, cancelText, callback) {
+    const modal = document.getElementById("game-modal");
+    document.getElementById("modal-bar").style.backgroundColor = barColor || "#ffd400";
+    document.getElementById("modal-title").innerText = title;
+    document.getElementById("modal-desc").innerHTML = descHtml;
+    document.getElementById("modal-btn-confirm").innerText = confirmText;
+
+    const cancelBtn = document.getElementById("modal-btn-cancel");
+    if (cancelText) {
+      cancelBtn.style.display = "block";
+      cancelBtn.innerText = cancelText;
+    } else {
+      cancelBtn.style.display = "none";
+    }
+
+    modalActionCallback = callback;
+    modal.classList.add("active");
+  }
+
+  function handleModalAction(accepted) {
+    document.getElementById("game-modal").classList.remove("active");
+    if (modalActionCallback) {
+      modalActionCallback(accepted);
+      modalActionCallback = null;
+    }
+  }
+
+  window.onload = initHomeScreen;
+</script>
+
+</body>
+</html>
